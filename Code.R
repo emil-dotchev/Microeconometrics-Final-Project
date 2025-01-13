@@ -18,6 +18,7 @@ library(stargazer)
 library(lmtest)
 library(sandwich)
 library(dplyr)
+library(AER)
 
 # Import the data
 data <- read_dta("ananat2011.dta")
@@ -54,7 +55,7 @@ summary_table <- data.frame(
 
 
 # Find the columns needed to reproduce the analysis
-columns_with_word <- names(data)[grepl("1920", names(data), ignore.case = TRUE)]
+columns_with_word <- names(data)[grepl("area", names(data), ignore.case = TRUE)]
 print(columns_with_word)
 
 # herf = rdi
@@ -165,7 +166,7 @@ robust_ses <- lapply(models,
                                                             type = "HC1")))
 
 # Compute means
-means <- sapply(vars, function(var) mean(data[[var]], na.rm = TRUE))
+means <- sapply(vars, function(var) round(mean(data[[var]], na.rm = TRUE), 3))
 
 means1 <- c("Mean of Dependent Variable", means[1:7])
 names(means1) <- NULL
@@ -197,7 +198,7 @@ stargazer(models[8:14],
           omit = "(Constant)",
           title = "Testing RDI as an Instrument",
           align = TRUE,
-          type = "text",  # Use "latex" or "html" for exporting
+          type = "latex",  # Use "latex" or "html" for exporting
           se = lapply(robust_ses[1:7], function(se) se[, 2]), # Extract robust SEs from coeftest
           dep.var.labels.include = FALSE,  # To mimic the 'Outcome' labeling
           column.labels = c("Percent black (1920)",
@@ -211,11 +212,69 @@ stargazer(models[8:14],
           omit.stat = c("rsq", "adj.rsq", "ser", "f"),
           notes = c("Robust standard errors in parentheses.",
                     "From Cutler-Glaeser-Vigdor data; sample limited to what that dataset provides.",
-                    "Calculated from ipums.org; full sample represented."),
+                    "Calculated from ipums.org; full sample represented.")
 )
 
 
+# Table 2
 
+# Top part
+m1 <- lm(lngini_w ~ dism1990, data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- lm(povrate_w ~ dism1990, data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- lm(lngini_b ~ dism1990, data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- lm(povrate_b ~ dism1990, data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+
+m5 <- ivreg(lngini_w ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m5, vcov = vcovHC(m5, type = "HC1"))
+m6 <- ivreg(povrate_w ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m6, vcov = vcovHC(m6, type = "HC1"))
+m7 <- ivreg(lngini_b ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m7, vcov = vcovHC(m7, type = "HC1"))
+m8 <- ivreg(povrate_b ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m8, vcov = vcovHC(m8, type = "HC1"))
+
+m9 <- lm(lngini_w ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m9, vcov = vcovHC(m9, type = "HC1"))
+m10 <- lm(povrate_w ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m10, vcov = vcovHC(m10, type = "HC1"))
+m11 <- lm(lngini_b ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m11, vcov = vcovHC(m11, type = "HC1"))
+m12 <- lm(povrate_b ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m12, vcov = vcovHC(m12, type = "HC1"))
+
+# Bottom part
+m1 <- lm(ln90w90b ~ dism1990, data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- lm(ln10w10b ~ dism1990, data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- lm(ln90w10b ~ dism1990, data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- lm(ln90b10w ~ dism1990, data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+
+m5 <- ivreg(ln90w90b ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m5, vcov = vcovHC(m5, type = "HC1"))
+m6 <- ivreg(ln10w10b ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m6, vcov = vcovHC(m6, type = "HC1"))
+m7 <- ivreg(ln90w10b ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m7, vcov = vcovHC(m7, type = "HC1"))
+m8 <- ivreg(ln90b10w ~ dism1990 + lenper | herf + lenper, data = data)
+coeftest(m8, vcov = vcovHC(m8, type = "HC1"))
+
+m9 <- lm(ln90w90b ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m9, vcov = vcovHC(m9, type = "HC1"))
+m10 <- lm(ln10w10b ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m10, vcov = vcovHC(m10, type = "HC1"))
+m11 <- lm(ln90w10b ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m11, vcov = vcovHC(m11, type = "HC1"))
+m12 <- lm(ln90b10w ~ herf + lenper, data %>% filter(closeness <= -400))
+coeftest(m12, vcov = vcovHC(m12, type = "HC1"))
 
 
 # EoF
