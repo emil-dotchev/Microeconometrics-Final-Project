@@ -5,20 +5,87 @@
 # Description: Recreate analysis of the paper about racial seggregation
 #  by Elizabeth Ananat.
 #
+# Explanation of Variables in Data
+# name:  City of metropolitan statistical area (MSA)
+# herf:  Railroad division index (RDI)
+# lenper:  Total track length per square kilometer
+# hsdrop_w:  
+# hsgrad_w:  
+# somecoll_w:  
+# collgrad_w:  
+# hsdrop_b:  
+# hsgrad_b:  
+# somecoll_b:  
+# collgrad_b:  
+# povrate_w:  
+# povrate_b:  
+# mt1proom_w:  
+# mt1proom_b:  
+# medgrent_w:  
+# medgrent_b:  
+# medgrentpinc_w:  
+# medgrentpinc_b:  
+# area1910:  Total area - 1910?
+# passpc:  Per capita street car passengers–1915
+# ngov62:  Number of local governments–1962
+# manshr:  Manufacturing share–1990
+# incseg:  Income segregation–1990 ?
+# closeness:  Distance from south
+# regdum1:  Northeast region indicator
+# regdum2:  Midwest region indicator
+# regdum3:  2 cities in Oklahoma, also categorized as Midwest ? (see page 18)
+# regdum4:  West region indicator
+# ethseg10:  
+# ethiso10:  
+# ethexp10:  
+# count1910:  
+# black1910:  
+# ctyliterate1920:  
+# lfp1920:  
+# ctytrade_wkrs1920:  
+# ctymanuf_wkrs1920:  
+# ctyrail_wkrs1920:  
+# count1920:  
+# black1920:  
+# gini_w:  
+# gini_b:  
+# p10_w:  
+# p50_w:  50th percentile income for whites ?
+# p90_w:  
+# p10_b:  
+# p50_b:  50th percentile income for blacks ?
+# p90_b:  
+# grsrnt_w:  
+# grsrnt_b:  
+# lngini_w:  
+# lngini_b:  
+# herfscore:  
+# ln90w90b:  
+# ln10w10b:  
+# ln90w10b:  
+# ln90b10w:  
+# mv_st_winus_w:  
+# mv_st_winus_b:  
+# lfp_w:  
+# lfp_b:  
+# dism1990:  Dissimilarity index–1990
+# pop1990:  Population–1990
+# pctbk1990:  Percent black–1990
 # ===================================================================
+
 
 
 # Step 0: Setup environment =========================================
 # Begin by loading necessary libraries and set the working directory
 
 # Load Required Libraries
-library(haven)
-library(ggplot2)
-library(stargazer)
+library(haven)  # Library to load .dta file
+library(dplyr)  # Library for data.frame manipultation
+library(ggplot2)  # Library for visualizations
+library(stargazer)  # Library for tables
 library(lmtest)
 library(sandwich)
-library(dplyr)
-library(AER)
+library(AER)  # Library for 2SLS
 
 # Import the data
 data <- read_dta("ananat2011.dta")
@@ -26,42 +93,50 @@ data <- read_dta("ananat2011.dta")
 # Step 1: Investigate data ==========================================
 # Understand the raw data provided
 
-class(data)
-head(data)
+class(df)
+head(df)
 
 # What is the dimension of the data
-dim(data)
+dim(df)
 
 
 # Each row is a "Metropolitan Statistical Area" (MSA)
-non_numeric_cols <- names(data)[!sapply(data, is.numeric)]
-print(sapply(data[non_numeric_cols], function(x) length(unique(x))))
+non_numeric_cols <- names(df)[!sapply(df, is.numeric)]
+print(sapply(df[non_numeric_cols], function(x) length(unique(x))))
 rm(non_numeric_cols)
 
 # Get names of numeric columns
-numeric_cols <- names(data)[sapply(data, is.numeric)]
+numeric_cols <- names(df)[sapply(df, is.numeric)]
 
 # Create a summary table to see the basics of the data.
 summary_table <- data.frame(
   Column_Name = numeric_cols,
-  Number_of_Rows = nrow(data),
-  Number_of_Unique_Values = sapply(data[numeric_cols], function(x) length(unique(x))),
-  Min = round(sapply(data[numeric_cols], min, na.rm = TRUE), 5),
-  Max = round(sapply(data[numeric_cols], max, na.rm = TRUE), 5),
-  Mean = round(sapply(data[numeric_cols], mean, na.rm = TRUE), 5),
-  Median = round(sapply(data[numeric_cols], median, na.rm = TRUE), 5),
-  Standard_Deviation = round(sapply(data[numeric_cols], sd, na.rm = TRUE), 5)
+  Number_of_Rows = nrow(df),
+  Number_of_Unique_Values = sapply(df[numeric_cols], function(x) length(unique(x))),
+  Min = round(sapply(df[numeric_cols], min, na.rm = TRUE), 5),
+  Max = round(sapply(df[numeric_cols], max, na.rm = TRUE), 5),
+  Mean = round(sapply(df[numeric_cols], mean, na.rm = TRUE), 5),
+  Median = round(sapply(df[numeric_cols], median, na.rm = TRUE), 5),
+  Standard_Deviation = round(sapply(df[numeric_cols], sd, na.rm = TRUE), 5)
 )
 
 
-# Find the columns needed to reproduce the analysis
-columns_with_word <- names(data)[grepl("area", names(data), ignore.case = TRUE)]
-print(columns_with_word)
+# Function to search and find the columns needed to reproduce the analysis
+find_cols <- function(string) {
+  return(
+    colnames(data)[grepl(string, names(data), ignore.case = TRUE)]
+  )
+}
 
-# herf = rdi
-# dism1990 = 1990 segregation
-# lenper = track_length (per sq km)
-# passpc = street-cars per cap.
+# Example usage
+columns_with_word <- find_cols("gini")
+print(find_cols("1920"))
+print(find_cols("area"))
+
+
+# The regdum columns appear to indicate what region the city is in
+print(sum(rowSums(data[find_cols("regdum")])))
+colSums(data[find_cols("regdum")])
 
 
 # Step 2: Scatter Plots with Linear Regression Line =================
