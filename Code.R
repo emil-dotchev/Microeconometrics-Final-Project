@@ -17,6 +17,7 @@ library(ggplot2)
 library(stargazer)
 library(lmtest)
 library(sandwich)
+library(dplyr)
 
 # Import the data
 data <- read_dta("ananat2011.dta")
@@ -177,7 +178,7 @@ stargazer(models[1:7],
           omit = "(Constant)",
           title = "Testing RDI as an Instrument",
           align = TRUE,
-          type = "text",  # Use "latex" or "html" for exporting
+          type = "latex",  # Use "latex" or "html" for exporting
           se = lapply(robust_ses[1:7], function(se) se[, 2]), # Extract robust SEs from coeftest
           dep.var.labels.include = FALSE,  # To mimic the 'Outcome' labeling
           column.labels = c("1990 dissimilarity index",
