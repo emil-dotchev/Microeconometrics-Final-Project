@@ -66,8 +66,8 @@
 # ln90b10w:  
 # mv_st_winus_w:  
 # mv_st_winus_b:  
-# lfp_w:  
-# lfp_b:  
+# lfp_w:  Labor force participation (white)
+# lfp_b:  Labor force participation (black)
 # dism1990:  Dissimilarity index–1990
 # pop1990:  Population–1990
 # pctbk1990:  Percent black–1990
@@ -91,7 +91,8 @@ library(AER)  # Library for 2SLS
 data <- read_dta("ananat2011.dta")
 
 # Step 1: Investigate data ==========================================
-# Understand the raw data provided
+
+# Understand the data provided
 
 class(df)
 head(df)
@@ -128,9 +129,7 @@ find_cols <- function(string) {
 }
 
 # Example usage
-columns_with_word <- find_cols("gini")
-print(find_cols("1920"))
-print(find_cols("area"))
+find_cols("gini")
 
 # The regdum columns appear to indicate what region the city is in
 print(sum(rowSums(data[find_cols("regdum")])))
@@ -479,4 +478,8 @@ coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
 
 
 # Table 5 -----------------------------------------------------------------------
+
+
+
+
 
