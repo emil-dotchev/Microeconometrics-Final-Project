@@ -55,7 +55,7 @@ summary_table <- data.frame(
 
 
 # Find the columns needed to reproduce the analysis
-columns_with_word <- names(data)[grepl("area", names(data), ignore.case = TRUE)]
+columns_with_word <- names(data)[grepl("20", names(data), ignore.case = TRUE)]
 print(columns_with_word)
 
 # herf = rdi
@@ -143,7 +143,7 @@ create_partitioned_scatter_plot(data, "closeness", "dism1990", "herf")  # Replac
 
 # Step 3: Tables of ==================
 
-# Table 1
+# Table 1  ----------------------------------------------------------------------------
 
 data$area1910 <- data$area1910/1000
 data$count1910 <- data$count1910/1000
@@ -179,9 +179,9 @@ stargazer(models[1:7],
           omit = "(Constant)",
           title = "Testing RDI as an Instrument",
           align = TRUE,
-          type = "latex",  # Use "latex" or "html" for exporting
-          se = lapply(robust_ses[1:7], function(se) se[, 2]), # Extract robust SEs from coeftest
-          dep.var.labels.include = FALSE,  # To mimic the 'Outcome' labeling
+          type = "latex",  
+          se = lapply(robust_ses[1:7], function(se) se[, 2]), 
+          dep.var.labels.include = FALSE, 
           column.labels = c("1990 dissimilarity index",
                              "Physical area (1910)",
                              "Population (1910)",
@@ -199,7 +199,7 @@ stargazer(models[8:14],
           title = "Testing RDI as an Instrument",
           align = TRUE,
           type = "latex",  # Use "latex" or "html" for exporting
-          se = lapply(robust_ses[1:7], function(se) se[, 2]), # Extract robust SEs from coeftest
+          se = lapply(robust_ses[8:14], function(se) se[, 2]), # Extract robust SEs from coeftest
           dep.var.labels.include = FALSE,  # To mimic the 'Outcome' labeling
           column.labels = c("Percent black (1920)",
                             "Percent literate (1920)",
@@ -216,7 +216,7 @@ stargazer(models[8:14],
 )
 
 
-# Table 2
+# Table 2 -----------------------------------------------------------------------
 
 # Top part
 m1 <- lm(lngini_w ~ dism1990, data)
@@ -277,4 +277,133 @@ m12 <- lm(ln90b10w ~ herf + lenper, data %>% filter(closeness <= -400))
 coeftest(m12, vcov = vcovHC(m12, type = "HC1"))
 
 
-# EoF
+# Table 3 -----------------------------------------------------------------------
+
+# 1990 Controls:
+
+# Population
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + I(pop1990/1000)| herf + lenper + I(pop1990/1000), data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + I(pop1990/1000)| herf + lenper + I(pop1990/1000), data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + I(pop1990/1000)| herf + lenper + I(pop1990/1000), data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + I(pop1990/1000)| herf + lenper + I(pop1990/1000), data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Percent black
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + pctbk1990| herf + lenper + pctbk1990, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + pctbk1990| herf + lenper + pctbk1990, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + pctbk1990| herf + lenper + pctbk1990, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + pctbk1990| herf + lenper + pctbk1990, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Education 
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b| herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b| herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b| herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b| herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Share employed in manufacturing
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + manshr| herf + lenper + manshr, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + manshr| herf + lenper + manshr, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + manshr| herf + lenper + manshr, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + manshr| herf + lenper + manshr, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Labor force participation
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + lfp_w + lfp_b| herf + lenper + lfp_w + lfp_b, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + lfp_w + lfp_b| herf + lenper + lfp_w + lfp_b, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + lfp_w + lfp_b| herf + lenper + lfp_w + lfp_b, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + lfp_w + lfp_b| herf + lenper + lfp_w + lfp_b, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Number of local governments
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + ngov62| herf + lenper + ngov62, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + ngov62| herf + lenper + ngov62, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + ngov62| herf + lenper + ngov62, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + ngov62| herf + lenper + ngov62, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# 1920 Controls:
+
+# Population
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + count1920| herf + lenper + count1920, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + count1920| herf + lenper + count1920, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + count1920| herf + lenper + count1920, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + count1920| herf + lenper + count1920, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Percent black
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + black1920| herf + lenper + black1920, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + black1920| herf + lenper + black1920, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + black1920| herf + lenper + black1920, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + black1920| herf + lenper + black1920, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Literacy !
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + ctyliterate1920| herf + lenper + ctyliterate1920, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + ctyliterate1920| herf + lenper + ctyliterate1920, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + ctyliterate1920| herf + lenper + ctyliterate1920, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + ctyliterate1920| herf + lenper + ctyliterate1920, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Share employed in manufacturing !!!
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + ctymanuf_wkrs1920| herf + lenper + ctymanuf_wkrs1920, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + ctymanuf_wkrs1920| herf + lenper + ctymanuf_wkrs1920, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + ctymanuf_wkrs1920| herf + lenper + ctymanuf_wkrs1920, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + ctymanuf_wkrs1920| herf + lenper + ctymanuf_wkrs1920, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Labor force participation !
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + lfp1920| herf + lenper + lfp1920, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + lfp1920| herf + lenper + lfp1920, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + lfp1920| herf + lenper + lfp1920, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + lfp1920| herf + lenper + lfp1920, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# Control for propensity score
+m1 <- ivreg(lngini_w ~ dism1990 + lenper + herfscore| herf + lenper + herfscore, data = data)
+coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
+m2 <- ivreg(lngini_b ~ dism1990 + lenper  + herfscore| herf + lenper + herfscore, data = data)
+coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
+m3 <- ivreg(povrate_w ~ dism1990 + lenper  + herfscore| herf + lenper + herfscore, data = data)
+coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
+m4 <- ivreg(povrate_b ~ dism1990 + lenper  + herfscore| herf + lenper + herfscore, data = data)
+coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+
+# Table 5 -----------------------------------------------------------------------
+
