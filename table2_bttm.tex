@@ -1,0 +1,24 @@
+\begin{table}[!h]
+\centering
+\caption{The Effects of Segregation on Poverty and Inequality among Blacks and Whites}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{10}{12}\selectfont
+\begin{tabular}[t]{>{}lccc}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{1}{c}{OLS} & \multicolumn{1}{c}{2SLS} & \multicolumn{1}{c}{Falsification} \\
+\cmidrule(l{3pt}r{3pt}){2-2} \cmidrule(l{3pt}r{3pt}){3-3} \cmidrule(l{3pt}r{3pt}){4-4}
+Outcome & White:black ratios & White:black ratios & White:black ratios\\
+\midrule
+\textbf{90 white: 90 black} & 0.111 & -0.131 & -0.443*\\
+\em{\textbf{}} & \em{(0.086)} & \em{(0.312)} & \em{(0.217)}\\
+\textbf{10 white: 10 black} & 1.295*** & 2.727*** & -0.135\\
+\em{\textbf{}} & \em{(0.249)} & \em{(0.867)} & \em{(0.532)}\\
+\textbf{90 white: 10 black} & 1.172*** & 1.789** & -0.449\\
+\addlinespace
+\textbf{} & (0.282) & (0.758) & (0.558)\\
+\textbf{10 white: 90 black} & -0.234* & -0.807** & 0.13\\
+\textbf{} & (0.131) & (0.384) & (0.248)\\
+\bottomrule
+\end{tabular}}
+\end{table}

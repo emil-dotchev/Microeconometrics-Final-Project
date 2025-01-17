@@ -86,6 +86,7 @@ library(stargazer)  # Library for tables
 library(lmtest)
 library(sandwich)
 library(AER)  # Library for 2SLS
+library(kableExtra) # for manual tables
 
 # Import the data
 data <- read_dta("ananat2011.dta")
@@ -291,63 +292,208 @@ stargazer(models[8:14],
 
 # Table 2 - The Effects of Segregation on Poverty and Inequality among Blacks and Whites ---------------------
 
-# Top part
-m1 <- lm(lngini_w ~ dism1990, data)
-coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
-m2 <- lm(povrate_w ~ dism1990, data)
-coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
-m3 <- lm(lngini_b ~ dism1990, data)
-coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
-m4 <- lm(povrate_b ~ dism1990, data)
-coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+# Define a function to run a model and calculate robust statistics
+run_model <- function(formula, data, is_ivreg = FALSE) {
+  model <- if (is_ivreg) ivreg(formula, data = data) else lm(formula, data = data)
+  coeftest(model, vcov = vcovHC(model, type = "HC1"))
+}
+
+# Define formulas for the models
+ols_formulas <- list(
+  lngini_w ~ dism1990,
+  povrate_w ~ dism1990,
+  lngini_b ~ dism1990,
+  povrate_b ~ dism1990
+)
+
+iv_formulas <- list(
+  lngini_w ~ dism1990 + lenper | herf + lenper,
+  povrate_w ~ dism1990 + lenper | herf + lenper,
+  lngini_b ~ dism1990 + lenper | herf + lenper,
+  povrate_b ~ dism1990 + lenper | herf + lenper
+)
+
+falsification_formulas <- list(
+  lngini_w ~ herf + lenper,
+  povrate_w ~ herf + lenper,
+  lngini_b ~ herf + lenper,
+  povrate_b ~ herf + lenper
+)
+
+# Run the models and store results in lists
+ols_results <- lapply(ols_formulas, function(f) run_model(f, data))
+iv_results <- lapply(iv_formulas, function(f) run_model(f, data, is_ivreg = TRUE))
+falsification_results <- lapply(falsification_formulas, function(f) run_model(f, data %>% filter(closeness <= -400)))
+
+# Function to format coefficients with significance stars
+format_with_stars <- function(coef, pval) {
+  if (pval < 0.01) {
+    return(paste0(round(coef, 3), "***"))
+  } else if (pval < 0.05) {
+    return(paste0(round(coef, 3), "**"))
+  } else if (pval < 0.1) {
+    return(paste0(round(coef, 3), "*"))
+  } else {
+    return(round(coef, 3))
+  }
+}
+
+# Extract results from models
+results <- data.frame(
+  Outcome = c("Gini Index", "", "Poverty Rate", ""),
+  Whites_OLS = c(
+    format_with_stars(coef(ols_results[[1]])["dism1990"], ols_results[[1]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[1]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(ols_results[[2]])["dism1990"], ols_results[[2]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[2]]["dism1990", "Std. Error"], 3), ")")
+  ),
+  Blacks_OLS = c(
+    format_with_stars(coef(ols_results[[3]])["dism1990"], ols_results[[3]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[3]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(ols_results[[4]])["dism1990"], ols_results[[4]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[4]]["dism1990", "Std. Error"], 3), ")")
+  ),
+  Whites_2SLS = c(
+    format_with_stars(coef(iv_results[[1]])["dism1990"], iv_results[[1]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[1]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(iv_results[[2]])["dism1990"], iv_results[[2]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[2]]["dism1990", "Std. Error"], 3), ")")
+  ),
+  Blacks_2SLS = c(
+    format_with_stars(coef(iv_results[[3]])["dism1990"], iv_results[[3]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[3]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(iv_results[[4]])["dism1990"], iv_results[[4]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[4]]["dism1990", "Std. Error"], 3), ")")
+  ),
+  Whites_Falsification = c(
+    format_with_stars(coef(falsification_results[[1]])["herf"], falsification_results[[1]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[1]]["herf", "Std. Error"], 3), ")"),
+    format_with_stars(coef(falsification_results[[2]])["herf"], falsification_results[[2]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[2]]["herf", "Std. Error"], 3), ")")
+  ),
+  Blacks_Falsification = c(
+    format_with_stars(coef(falsification_results[[3]])["herf"], falsification_results[[3]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[3]]["herf", "Std. Error"], 3), ")"),
+    format_with_stars(coef(falsification_results[[4]])["herf"], falsification_results[[4]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[4]]["herf", "Std. Error"], 3), ")")
+  )
+)
 
 
-m5 <- ivreg(lngini_w ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m5, vcov = vcovHC(m5, type = "HC1"))
-m6 <- ivreg(povrate_w ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m6, vcov = vcovHC(m6, type = "HC1"))
-m7 <- ivreg(lngini_b ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m7, vcov = vcovHC(m7, type = "HC1"))
-m8 <- ivreg(povrate_b ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m8, vcov = vcovHC(m8, type = "HC1"))
+# Create the kableExtra table
+latex_output <- results %>%
+  kbl(
+    caption = "The Effects of Segregation on Poverty and Inequality among Blacks and Whites", 
+    col.names = c("Outcome", 
+                  "Whites", "Blacks", 
+                  "Whites", "Blacks", 
+                  "Whites", "Blacks"),
+    booktabs = TRUE,  # Use LaTeX booktabs styling
+    format = "latex",
+    align = "lcccccc" # Align columns (left for Outcome, center for others)
+  ) %>%
+  add_header_above(
+    c(" " = 1, "OLS" = 2, "2SLS" = 2, "Falsification" = 2) # Group column headers
+  ) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), # Adjust table to fit
+    font_size = 10                                    # Optional: Adjust font size
+  ) %>%
+  column_spec(1, bold = TRUE) %>%                     # Make the first column bold
+  row_spec(c(2, 4), italic = TRUE)                   # Italicize rows for standard errors
 
-m9 <- lm(lngini_w ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m9, vcov = vcovHC(m9, type = "HC1"))
-m10 <- lm(povrate_w ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m10, vcov = vcovHC(m10, type = "HC1"))
-m11 <- lm(lngini_b ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m11, vcov = vcovHC(m11, type = "HC1"))
-m12 <- lm(povrate_b ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m12, vcov = vcovHC(m12, type = "HC1"))
+# Export to tex
+writeLines(latex_output, "table2_top.tex")
 
 # Bottom part
-m1 <- lm(ln90w90b ~ dism1990, data)
-coeftest(m1, vcov = vcovHC(m1, type = "HC1"))
-m2 <- lm(ln10w10b ~ dism1990, data)
-coeftest(m2, vcov = vcovHC(m2, type = "HC1"))
-m3 <- lm(ln90w10b ~ dism1990, data)
-coeftest(m3, vcov = vcovHC(m3, type = "HC1"))
-m4 <- lm(ln90b10w ~ dism1990, data)
-coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
+
+# OLS models 
+ols_formulas <- list(
+  ln90w90b ~ dism1990,
+  ln10w10b ~ dism1990,
+  ln90w10b ~ dism1990,
+  ln90b10w ~ dism1990
+)
+
+# IV models 
+iv_formulas <- list(
+  ln90w90b ~ dism1990 + lenper | herf + lenper,
+  ln10w10b ~ dism1990 + lenper | herf + lenper,
+  ln90w10b ~ dism1990 + lenper | herf + lenper,
+  ln90b10w ~ dism1990 + lenper | herf + lenper
+)
+
+# Falsification models 
+falsification_formulas <- list(
+  ln90w90b ~ herf + lenper,
+  ln10w10b ~ herf + lenper,
+  ln90w10b ~ herf + lenper,
+  ln90b10w ~ herf + lenper
+)
+
+ols_results <- lapply(ols_formulas, function(f) run_model(f, data))
+iv_results <- lapply(iv_formulas, function(f) run_model(f, data, is_ivreg = TRUE))
+falsification_results <- lapply(falsification_formulas, function(f) run_model(f, data %>% filter(closeness <= -400)))
+
+# Extract results from models
+results <- data.frame(
+  Outcome = c("90 white: 90 black", "", "10 white: 10 black", "", "90 white: 10 black", "", "10 white: 90 black", ""),
+  OLS = c(
+    format_with_stars(coef(ols_results[[1]])["dism1990"], ols_results[[1]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[1]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(ols_results[[2]])["dism1990"], ols_results[[2]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[2]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(ols_results[[3]])["dism1990"], ols_results[[3]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[3]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(ols_results[[4]])["dism1990"], ols_results[[4]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(ols_results[[4]]["dism1990", "Std. Error"], 3), ")")
+  ),
+  TwoSLS = c(
+    format_with_stars(coef(iv_results[[1]])["dism1990"], iv_results[[1]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[1]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(iv_results[[2]])["dism1990"], iv_results[[2]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[2]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(iv_results[[3]])["dism1990"], iv_results[[3]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[3]]["dism1990", "Std. Error"], 3), ")"),
+    format_with_stars(coef(iv_results[[4]])["dism1990"], iv_results[[4]]["dism1990", "Pr(>|t|)"]),
+    paste0("(", round(iv_results[[4]]["dism1990", "Std. Error"], 3), ")")
+  ),
+  Falsification = c(
+    format_with_stars(coef(falsification_results[[1]])["herf"], falsification_results[[1]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[1]]["herf", "Std. Error"], 3), ")"),
+    format_with_stars(coef(falsification_results[[2]])["herf"], falsification_results[[2]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[2]]["herf", "Std. Error"], 3), ")"),
+    format_with_stars(coef(falsification_results[[3]])["herf"], falsification_results[[3]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[3]]["herf", "Std. Error"], 3), ")"),
+    format_with_stars(coef(falsification_results[[4]])["herf"], falsification_results[[4]]["herf", "Pr(>|t|)"]),
+    paste0("(", round(falsification_results[[4]]["herf", "Std. Error"], 3), ")")
+  )
+)
 
 
-m5 <- ivreg(ln90w90b ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m5, vcov = vcovHC(m5, type = "HC1"))
-m6 <- ivreg(ln10w10b ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m6, vcov = vcovHC(m6, type = "HC1"))
-m7 <- ivreg(ln90w10b ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m7, vcov = vcovHC(m7, type = "HC1"))
-m8 <- ivreg(ln90b10w ~ dism1990 + lenper | herf + lenper, data = data)
-coeftest(m8, vcov = vcovHC(m8, type = "HC1"))
+# Create the kableExtra table
+latex_output <- results %>%
+  kbl(
+    caption = "The Effects of Segregation on Poverty and Inequality among Blacks and Whites", 
+    col.names = c("Outcome", 
+                  "White:black ratios", "White:black ratios", 
+                  "White:black ratios"),
+    booktabs = TRUE,  # Use LaTeX booktabs styling
+    format = "latex",
+    align = "lcccccc" # Align columns (left for Outcome, center for others)
+  ) %>%
+  add_header_above(
+    c(" " = 1, "OLS" = 1, "2SLS" = 1, "Falsification" = 1) # Group column headers
+  ) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), # Adjust table to fit
+    font_size = 10                                    # Optional: Adjust font size
+  ) %>%
+  column_spec(1, bold = TRUE) %>%                     # Make the first column bold
+  row_spec(c(2, 4), italic = TRUE)                   # Italicize rows for standard errors
 
-m9 <- lm(ln90w90b ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m9, vcov = vcovHC(m9, type = "HC1"))
-m10 <- lm(ln10w10b ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m10, vcov = vcovHC(m10, type = "HC1"))
-m11 <- lm(ln90w10b ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m11, vcov = vcovHC(m11, type = "HC1"))
-m12 <- lm(ln90b10w ~ herf + lenper, data %>% filter(closeness <= -400))
-coeftest(m12, vcov = vcovHC(m12, type = "HC1"))
+# Export to tex
+writeLines(latex_output, "table2_bttm.tex")
 
 
 # Table 3 — Robustness Checks ---------------------------------------
@@ -628,10 +774,11 @@ hsd_b_ols <- lm(hsdrop_b ~ dism1990 + regdum1 + regdum2 + regdum3, data)
 round(coeftest(hsd_b_ols, vcov = vcovHC(hsd_b_ols, type = "HC1")), 3)
 
 # IV
-hsd_w_iv <- ivreg(hsdrop_w ~ dism1990 + lenper + regdum1 + regdum2 + regdum3 | herf + lenper + regdum1 + regdum2 + regdum3, data = data)
+hsd_w_iv <- ivreg(hsdrop_w ~ dism1990 + lenper | herf + lenper, data = data)
 round(coeftest(hsd_w_iv, vcov = vcovHC(hsd_w_iv, type = "HC1")), 3)
 hsd_b_iv <- ivreg(hsdrop_b ~ dism1990 + lenper + regdum1 + regdum2 + regdum3| herf + lenper + regdum1 + regdum2 + regdum3, data = data)
 round(coeftest(hsd_b_iv, vcov = vcovHC(hsd_b_iv, type = "HC1")), 3)
+
 # Falsification: Reduced form effect of RDI among cities far from the South
 hsd_w_f <- ivreg(hsdrop_w ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
 round(coeftest(hsd_w_f, vcov = vcovHC(hsd_w_f, type = "HC1")), 3)
