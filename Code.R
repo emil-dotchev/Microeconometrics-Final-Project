@@ -9,14 +9,14 @@
 # name:  City of metropolitan statistical area (MSA)
 # herf:  Railroad division index (RDI)
 # lenper:  Total track length per square kilometer
-# hsdrop_w:  
-# hsgrad_w:  
-# somecoll_w:  
-# collgrad_w:  
-# hsdrop_b:  
-# hsgrad_b:  
-# somecoll_b:  
-# collgrad_b:  
+# hsdrop_w:  High school drop rate (white)
+# hsgrad_w:  High school graduates (white)
+# somecoll_w:  Some college education (white)
+# collgrad_w:  College graduates (white)
+# hsdrop_b:  High school drop rate (black)
+# hsgrad_b:  High school graduates (black)
+# somecoll_b:  Some college education (black)
+# collgrad_b: College graduates (black)
 # povrate_w:  Poverty rate for whites
 # povrate_b:  Poverty rate for blacks
 # mt1proom_w:  Share of households with more than one person per room, White
@@ -130,9 +130,7 @@ find_columns <- function(string) {
 }
 
 # Example usage
-columns_with_word <- find_columns("gini")
-print(find_columns("1920"))
-print(find_columns("area"))
+find_columns("gini") # you don't need print the way you defined this function, just run it
 
 # The regdum columns appear to indicate what region the city is in
 print(sum(rowSums(data[find_columns("regdum")])))
@@ -291,7 +289,7 @@ stargazer(models[8:14],
 )
 
 
-# Table 2 - The Effects of Segregation on Poverty and Inequality among Blacks and Whites
+# Table 2 - The Effects of Segregation on Poverty and Inequality among Blacks and Whites ---------------------
 
 # Top part
 m1 <- lm(lngini_w ~ dism1990, data)
@@ -480,75 +478,95 @@ m4 <- ivreg(povrate_b ~ dism1990 + lenper  + herfscore| herf + lenper + herfscor
 coeftest(m4, vcov = vcovHC(m4, type = "HC1"))
 
 
-# Table 4 — The Effects of 1990 Segregation on 1990 City Demand -----
+# Table 4 — The Effects of 1990 Segregation on 1990 City Demand ----------------------
 
 # Outcome: Percent of residents who are in-migrants
 # OLS
 in_w_ols <- lm(mv_st_winus_w ~ dism1990, data)
-# round(coeftest(in_w_ols, vcov = vcovHC(in_w_ols, type = "HC1")), 3)
+round(coeftest(in_w_ols, vcov = vcovHC(in_w_ols, type = "HC1")), 3)
+
 in_b_ols <- lm(mv_st_winus_b ~ dism1990, data)
-# round(coeftest(in_b_ols, vcov = vcovHC(in_b_ols, type = "HC1")), 3)
+round(coeftest(in_b_ols, vcov = vcovHC(in_b_ols, type = "HC1")), 3)
+
 # IV
 in_w_iv <- ivreg(mv_st_winus_w ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(in_w_iv, vcov = vcovHC(in_w_iv, type = "HC1")), 3)
+round(coeftest(in_w_iv, vcov = vcovHC(in_w_iv, type = "HC1")), 3)
+
 in_b_iv <- ivreg(mv_st_winus_b ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(in_b_iv, vcov = vcovHC(in_b_iv, type = "HC1")), 3)
+round(coeftest(in_b_iv, vcov = vcovHC(in_b_iv, type = "HC1")), 3)
+
 # Falsification: Reduced form effect of RDI among cities far from the South
-in_w_f <- ivreg(mv_st_winus_w ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(in_w_f, vcov = vcovHC(in_w_f, type = "HC1")), 3)
-in_b_f <- ivreg(mv_st_winus_b ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(in_b_f, vcov = vcovHC(in_b_f, type = "HC1")), 3)
+in_w_f <- lm(mv_st_winus_w ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(in_w_f, vcov = vcovHC(in_w_f, type = "HC1")), 3)
+
+in_b_f <- lm(mv_st_winus_b ~ herf + lenper, data = data %>% filter(closeness < -400))
+round(coeftest(in_b_f, vcov = vcovHC(in_b_f, type = "HC1")), 3)
 
 # Outcome: Median rent
 # OLS
 mr_w_ols <- lm(medgrent_w ~ dism1990, data)
-# round(coeftest(mr_w_ols, vcov = vcovHC(mr_w_ols, type = "HC1")), 0)
+round(coeftest(mr_w_ols, vcov = vcovHC(mr_w_ols, type = "HC1")), 0)
+
 mr_b_ols <- lm(medgrent_b ~ dism1990, data)
-# round(coeftest(mr_b_ols, vcov = vcovHC(mr_b_ols, type = "HC1")), 0)
+round(coeftest(mr_b_ols, vcov = vcovHC(mr_b_ols, type = "HC1")), 0)
+
 # IV
 mr_w_iv <- ivreg(medgrent_w ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(mr_w_iv, vcov = vcovHC(mr_w_iv, type = "HC1")), 0)
+round(coeftest(mr_w_iv, vcov = vcovHC(mr_w_iv, type = "HC1")), 0)
+
 mr_b_iv <- ivreg(medgrent_b ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(mr_b_iv, vcov = vcovHC(mr_b_iv, type = "HC1")), 0)
+round(coeftest(mr_b_iv, vcov = vcovHC(mr_b_iv, type = "HC1")), 0)
+
 # Falsification: Reduced form effect of RDI among cities far from the South
-mr_w_f <- ivreg(medgrent_w ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(mr_w_f, vcov = vcovHC(mr_w_f, type = "HC1")), 0)
-mr_b_f <- ivreg(medgrent_b ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(mr_b_f, vcov = vcovHC(mr_b_f, type = "HC1")), 0)
+mr_w_f <- lm(medgrent_w ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(mr_w_f, vcov = vcovHC(mr_w_f, type = "HC1")), 0)
+
+mr_b_f <- lm(medgrent_b ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(mr_b_f, vcov = vcovHC(mr_b_f, type = "HC1")), 0)
 
 # Outcome: Median rent as a percent of income
 # OLS
 mrpi_w_ols <- lm(medgrentpinc_w ~ dism1990, data)
-# round(coeftest(mrpi_w_ols, vcov = vcovHC(mrpi_w_ols, type = "HC1")), 3)
+round(coeftest(mrpi_w_ols, vcov = vcovHC(mrpi_w_ols, type = "HC1")), 3)
+
 mrpi_b_ols <- lm(medgrentpinc_b ~ dism1990, data)
-# round(coeftest(mrpi_b_ols, vcov = vcovHC(mrpi_b_ols, type = "HC1")), 3)
+round(coeftest(mrpi_b_ols, vcov = vcovHC(mrpi_b_ols, type = "HC1")), 3)
+
 # IV
 mrpi_w_iv <- ivreg(medgrentpinc_w ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(mrpi_w_iv, vcov = vcovHC(mrpi_w_iv, type = "HC1")), 3)
+round(coeftest(mrpi_w_iv, vcov = vcovHC(mrpi_w_iv, type = "HC1")), 3)
+
 mrpi_b_iv <- ivreg(medgrentpinc_b ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(mrpi_b_iv, vcov = vcovHC(mrpi_b_iv, type = "HC1")), 3)
+round(coeftest(mrpi_b_iv, vcov = vcovHC(mrpi_b_iv, type = "HC1")), 3)
+
 # Falsification: Reduced form effect of RDI among cities far from the South
-mrpi_w_f <- ivreg(medgrentpinc_w ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(mrpi_w_f, vcov = vcovHC(mrpi_w_f, type = "HC1")), 3)
-mrpi_b_f <- ivreg(medgrentpinc_b ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(mrpi_b_f, vcov = vcovHC(mrpi_b_f, type = "HC1")), 3)
+mrpi_w_f <- lm(medgrentpinc_w ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(mrpi_w_f, vcov = vcovHC(mrpi_w_f, type = "HC1")), 3)
+
+mrpi_b_f <- lm(medgrentpinc_b ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(mrpi_b_f, vcov = vcovHC(mrpi_b_f, type = "HC1")), 3)
 
 # Outcome: Share of households with more than one person per room
 # OLS
 mt_w_ols <- lm(mt1proom_w ~ dism1990, data)
-# round(coeftest(mt_w_ols, vcov = vcovHC(mt_w_ols, type = "HC1")), 3)
+round(coeftest(mt_w_ols, vcov = vcovHC(mt_w_ols, type = "HC1")), 3)
+
 mt_b_ols <- lm(mt1proom_b ~ dism1990, data)
-# round(coeftest(mt_b_ols, vcov = vcovHC(mt_b_ols, type = "HC1")), 3)
+round(coeftest(mt_b_ols, vcov = vcovHC(mt_b_ols, type = "HC1")), 3)
+
 # IV
 mt_w_iv <- ivreg(mt1proom_w ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(mt_w_iv, vcov = vcovHC(mt_w_iv, type = "HC1")), 3)
+round(coeftest(mt_w_iv, vcov = vcovHC(mt_w_iv, type = "HC1")), 3)
+
 mt_b_iv <- ivreg(mt1proom_b ~ dism1990 + lenper | herf + lenper, data = data)
-# round(coeftest(mt_b_iv, vcov = vcovHC(mt_b_iv, type = "HC1")), 3)
+round(coeftest(mt_b_iv, vcov = vcovHC(mt_b_iv, type = "HC1")), 3)
+
 # Falsification: Reduced form effect of RDI among cities far from the South
-mt_w_f <- lm(mt1proom_w ~ dism1990 + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(mt_w_f, vcov = vcovHC(mt_w_f, type = "HC1")), 3)
-mt_b_f <- lm(mt1proom_b ~ dism1990 + lenper, data = data %>% filter(closeness < -400))
-# round(coeftest(mt_b_f, vcov = vcovHC(mt_b_f, type = "HC1")), 3)
+mt_w_f <- lm(mt1proom_w ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(mt_w_f, vcov = vcovHC(mt_w_f, type = "HC1")), 3)
+
+mt_b_f <- lm(mt1proom_b ~ herf + lenper, data = data %>% filter(closeness <= -400))
+round(coeftest(mt_b_f, vcov = vcovHC(mt_b_f, type = "HC1")), 3)
 
 # Define function to extract robust standard errors
 robust_se <- function(model) {
@@ -558,7 +576,7 @@ robust_se <- function(model) {
 }
 
 
-# Define a funciton to recreat similar visualizations
+# Define a funciton to recreate similar visualizations
 table4_generate <- function(w_model, b_model, col_label, cov_label, omit = "(Constant)|lenper") {
   return(
     stargazer(
@@ -599,18 +617,20 @@ table4_generate(mrpi_w_f, mrpi_b_f, "Rent Income", "Falsification")
 table4_generate(mt_w_f, mt_b_f, "Room", "Falsification")
 
 
-# Table 5 — The Effects of 1980 Dissimilarity on Human Capital of 22- to 30-Year-Olds in 1980
+# Table 5 — The Effects of 1980 Dissimilarity on Human Capital of 22- to 30-Year-Olds in 1980 --------------
 
 # Outcome: Share who are high school dropouts
 # OLS
-hsd_w_ols <- lm(hsdrop_w ~ dism1990, data)
+hsd_w_ols <- lm(hsdrop_w ~ dism1990 + regdum1 + regdum2 + regdum3, data)
 round(coeftest(hsd_w_ols, vcov = vcovHC(hsd_w_ols, type = "HC1")), 3)
-hsd_b_ols <- lm(hsdrop_b ~ dism1990, data)
+
+hsd_b_ols <- lm(hsdrop_b ~ dism1990 + regdum1 + regdum2 + regdum3, data)
 round(coeftest(hsd_b_ols, vcov = vcovHC(hsd_b_ols, type = "HC1")), 3)
+
 # IV
-hsd_w_iv <- ivreg(hsdrop_w ~ dism1990 + lenper | herf + lenper, data = data)
+hsd_w_iv <- ivreg(hsdrop_w ~ dism1990 + lenper + regdum1 + regdum2 + regdum3 | herf + lenper + regdum1 + regdum2 + regdum3, data = data)
 round(coeftest(hsd_w_iv, vcov = vcovHC(hsd_w_iv, type = "HC1")), 3)
-hsd_b_iv <- ivreg(hsdrop_b ~ dism1990 + lenper | herf + lenper, data = data)
+hsd_b_iv <- ivreg(hsdrop_b ~ dism1990 + lenper + regdum1 + regdum2 + regdum3| herf + lenper + regdum1 + regdum2 + regdum3, data = data)
 round(coeftest(hsd_b_iv, vcov = vcovHC(hsd_b_iv, type = "HC1")), 3)
 # Falsification: Reduced form effect of RDI among cities far from the South
 hsd_w_f <- ivreg(hsdrop_w ~ dism1990 + lenper | herf + lenper, data = data %>% filter(closeness < -400))
