@@ -156,9 +156,9 @@ create_scatter_plot <- function(df, x_col, y_col) {
               hjust = 0.5, vjust = 1.5) +
     xlim(0.2, 1) +
     ylim(0.2, 1) +
-    labs(title = paste("Scatter Plot of", x_col, "vs.", y_col),
-         x = paste(x_col, " (X-axis)"), 
-         y = paste(y_col, " (Y-axis)"),
+    labs(title = "Scatter Plot of RDI vs. 1990 segregation",
+         x = "RDI (X-axis)", 
+         y = "1990 segregation (Y-axis)",
          caption = "Note: This plot shows the relationship between the two variables.") +
     annotate("text", 
              x = min(df[[x_col]]), y = min(df[[y_col]]), 
@@ -193,19 +193,19 @@ create_partitioned_scatter_plot <- function(df, x_col, y_col, group_col) {
     geom_smooth(method = "lm", se = TRUE, aes(fill = group), alpha = 0.15) +  # Add confidence bounds
     geom_text(aes(label = name), size = 2, color = "darkgray", alpha = 0.6,
               vjust = 1.2, show.legend = FALSE) +
-    labs(title = paste("Partitioned Scatter Plot of", x_col, "vs.", y_col),
-         x = paste(x_col, "(X-axis)"),
-         y = paste(y_col, "(Y-axis)"),
+    labs(title = "Distance from the South vs. 1990 segregation",
+         x = "Distance from the South (X-axis)",
+         y = "1990 segregation (Y-axis)",
          color = "Group", fill = "Group",
          caption = "Note: This plot shows the relationship between variables, partitioned by groups.") +
-    annotate("text", 
-             x = min(df[[x_col]]), y = max(df[[y_col]]), 
-             label = paste("Slope (Top) =", round(slope_top, 5)), 
-             color = "red3", hjust = 0, vjust = 1) +  # Top line label
-    annotate("text", 
-             x = min(df[[x_col]]), y = max(df[[y_col]]) - 0.1 * diff(range(data[[y_col]])), 
-             label = paste("Slope (Bottom) =", round(slope_bottom, 5)), 
-             color = "blue3", hjust = 0, vjust = 1) +  # Bottom line label (adjusted position)
+#    annotate("text", 
+#             x = min(df[[x_col]]), y = max(df[[y_col]]), 
+#             label = paste("Slope (Top) =", round(slope_top, 5)), 
+#             color = "red3", hjust = 0, vjust = 1) +  # Top line label
+#     annotate("text", 
+#             x = min(df[[x_col]]), y = max(df[[y_col]]) - 0.1 * diff(range(data[[y_col]])), 
+#             label = paste("Slope (Bottom) =", round(slope_bottom, 5)), 
+#            color = "blue3", hjust = 0, vjust = 1) +  # Bottom line label (adjusted position)
     theme_bw() +
     scale_color_manual(values = c("red3", "blue3")) +  # Set colors for points
     scale_fill_manual(values = c("red3", "blue3"))     # Set colors for lines
@@ -494,6 +494,217 @@ latex_output <- results %>%
 
 # Export to tex
 writeLines(latex_output, "table2_bttm.tex")
+
+# Table 3 NEW -------------------------------
+
+# Population
+population_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + I(pop1990/1000) | herf + lenper + I(pop1990/1000)",
+  "lngini_b ~ dism1990 + lenper + I(pop1990/1000) | herf + lenper + I(pop1990/1000)",
+  "povrate_w ~ dism1990 + lenper + I(pop1990/1000) | herf + lenper + I(pop1990/1000)",
+  "povrate_b ~ dism1990 + lenper + I(pop1990/1000) | herf + lenper + I(pop1990/1000)"
+)
+
+# Percent black
+percent_black_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + pctbk1990 | herf + lenper + pctbk1990",
+  "lngini_b ~ dism1990 + lenper + pctbk1990 | herf + lenper + pctbk1990",
+  "povrate_w ~ dism1990 + lenper + pctbk1990 | herf + lenper + pctbk1990",
+  "povrate_b ~ dism1990 + lenper + pctbk1990 | herf + lenper + pctbk1990"
+)
+
+# Education
+education_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b | herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b",
+  "lngini_b ~ dism1990 + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b | herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b",
+  "povrate_w ~ dism1990 + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b | herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b",
+  "povrate_b ~ dism1990 + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b | herf + lenper + hsdrop_w + hsdrop_b + hsgrad_w + hsgrad_b + somecoll_w + somecoll_b + collgrad_w + collgrad_b"
+)
+
+# Share employed in manufacturing
+manufacturing_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + manshr | herf + lenper + manshr",
+  "lngini_b ~ dism1990 + lenper + manshr | herf + lenper + manshr",
+  "povrate_w ~ dism1990 + lenper + manshr | herf + lenper + manshr",
+  "povrate_b ~ dism1990 + lenper + manshr | herf + lenper + manshr"
+)
+
+# Labor force participation
+lfp_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + lfp_w + lfp_b | herf + lenper + lfp_w + lfp_b",
+  "lngini_b ~ dism1990 + lenper + lfp_w + lfp_b | herf + lenper + lfp_w + lfp_b",
+  "povrate_w ~ dism1990 + lenper + lfp_w + lfp_b | herf + lenper + lfp_w + lfp_b",
+  "povrate_b ~ dism1990 + lenper + lfp_w + lfp_b | herf + lenper + lfp_w + lfp_b"
+)
+
+# Number of local governments
+local_governments_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + ngov62 | herf + lenper + ngov62",
+  "lngini_b ~ dism1990 + lenper + ngov62 | herf + lenper + ngov62",
+  "povrate_w ~ dism1990 + lenper + ngov62 | herf + lenper + ngov62",
+  "povrate_b ~ dism1990 + lenper + ngov62 | herf + lenper + ngov62"
+)
+
+# 1920 Controls
+# Population
+population_1920_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + count1920 | herf + lenper + count1920",
+  "lngini_b ~ dism1990 + lenper + count1920 | herf + lenper + count1920",
+  "povrate_w ~ dism1990 + lenper + count1920 | herf + lenper + count1920",
+  "povrate_b ~ dism1990 + lenper + count1920 | herf + lenper + count1920"
+)
+
+# Percent black 1920
+percent_black_1920_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + black1920 | herf + lenper + black1920",
+  "lngini_b ~ dism1990 + lenper + black1920 | herf + lenper + black1920",
+  "povrate_w ~ dism1990 + lenper + black1920 | herf + lenper + black1920",
+  "povrate_b ~ dism1990 + lenper + black1920 | herf + lenper + black1920"
+)
+
+# Literacy
+literacy_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + ctyliterate1920 | herf + lenper + ctyliterate1920",
+  "lngini_b ~ dism1990 + lenper + ctyliterate1920 | herf + lenper + ctyliterate1920",
+  "povrate_w ~ dism1990 + lenper + ctyliterate1920 | herf + lenper + ctyliterate1920",
+  "povrate_b ~ dism1990 + lenper + ctyliterate1920 | herf + lenper + ctyliterate1920"
+)
+
+# Share employed in manufacturing 1920
+manufacturing_1920_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + ctymanuf_wkrs1920 | herf + lenper + ctymanuf_wkrs1920",
+  "lngini_b ~ dism1990 + lenper + ctymanuf_wkrs1920 | herf + lenper + ctymanuf_wkrs1920",
+  "povrate_w ~ dism1990 + lenper + ctymanuf_wkrs1920 | herf + lenper + ctymanuf_wkrs1920",
+  "povrate_b ~ dism1990 + lenper + ctymanuf_wkrs1920 | herf + lenper + ctymanuf_wkrs1920"
+)
+
+# Labor force participation 1920
+lfp_1920_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + lfp1920 | herf + lenper + lfp1920",
+  "lngini_b ~ dism1990 + lenper + lfp1920 | herf + lenper + lfp1920",
+  "povrate_w ~ dism1990 + lenper + lfp1920 | herf + lenper + lfp1920",
+  "povrate_b ~ dism1990 + lenper + lfp1920 | herf + lenper + lfp1920"
+)
+
+# Control for propensity score
+propensity_score_formulas <- list(
+  "lngini_w ~ dism1990 + lenper + herfscore | herf + lenper + herfscore",
+  "lngini_b ~ dism1990 + lenper + herfscore | herf + lenper + herfscore",
+  "povrate_w ~ dism1990 + lenper + herfscore | herf + lenper + herfscore",
+  "povrate_b ~ dism1990 + lenper + herfscore | herf + lenper + herfscore"
+)
+
+
+# Create a list of formula categories
+formula_lists <- list(
+  population_formulas,
+  percent_black_formulas,
+  education_formulas,
+  manufacturing_formulas,
+  lfp_formulas,
+  local_governments_formulas,
+  population_1920_formulas,
+  percent_black_1920_formulas,
+  literacy_formulas,
+  manufacturing_1920_formulas,
+  lfp_1920_formulas,
+  propensity_score_formulas
+)
+
+# List names for easy referencing
+list_names <- c(
+  "population_results", 
+  "percent_black_results", 
+  "education_results", 
+  "manufacturing_results", 
+  "lfp_results", 
+  "local_governments_results", 
+  "population_1920_results", 
+  "percent_black_1920_results", 
+  "literacy_results", 
+  "manufacturing_1920_results", 
+  "lfp_1920_results", 
+  "propensity_score_results"
+)
+
+# Apply run_model to each formula list and store results in named variables
+results <- setNames(
+  lapply(formula_lists, function(f) lapply(f, function(formula) run_model(formula, data, is_ivreg = TRUE))),
+  list_names
+)
+
+attach(results)
+
+# Use a loop and lapply to generate the vector for each result list
+result_vectors <- list()
+
+for (i in 1:4) {
+  result_vectors[[paste0("N", i)]] <- unlist(lapply(list_names, function(result_name) {
+    coef_data <- coef(get(result_name)[[i]])["dism1990"]
+    p_value <- get(result_name)[[i]]["dism1990", "Pr(>|t|)"]
+    std_error <- get(result_name)[[i]]["dism1990", "Std. Error"]
+    
+    c(
+      format_with_stars(coef_data, p_value),
+      paste0("(", round(std_error, 3), ")")
+    )
+  }))
+}
+
+# Access each result vector
+result_vectors$N1
+result_vectors$N2
+result_vectors$N3
+result_vectors$N4
+
+# Extract results from models
+results <- data.frame(
+  Outcome = c(
+    "Population", "", 
+    "Percent Black", "", 
+    "Education", "", 
+    "Manufacturing", "", 
+    "Labor Force Participation", "", 
+    "Number of Local Governments", "", 
+    "Population 1920", "", 
+    "Percent Black 1920", "", 
+    "Literacy", "", 
+    "Manufacturing 1920", "", 
+    "Labor Force Participation 1920", "", 
+    "Propensity Score", ""
+  )
+  ,
+  Whites_Gini = result_vectors$N1,
+  Blacks_Gini = result_vectors$N2,
+  Whites_Poverty = result_vectors$N3,
+  Blacks_Poverty = result_vectors$N4
+)
+
+
+# Create the kableExtra table
+latex_output <- results %>%
+  kbl(
+    caption = "The Effects of Segregation on Poverty and Inequality among Blacks and Whites", 
+    col.names = c("", 
+                  "Whites", "Blacks", 
+                  "Whites", "Blacks"),
+    booktabs = TRUE,  # Use LaTeX booktabs styling
+    format = "latex",
+    align = "lcccccc" # Align columns (left for Outcome, center for others)
+  ) %>%
+  add_header_above(
+    c(" " = 1, "Outcome: Gini Index" = 2, "Outcome: Poverty rate" = 2) # Group column headers
+  ) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), # Adjust table to fit
+    font_size = 10                                    # Optional: Adjust font size
+  ) %>%
+  column_spec(1, bold = TRUE) %>%                     # Make the first column bold
+  row_spec(c(2, 4), italic = TRUE)                   # Italicize rows for standard errors
+
+# Export to tex
+writeLines(latex_output, "table3.tex")
+
 
 
 # Table 3 — Robustness Checks ---------------------------------------
